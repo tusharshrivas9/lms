@@ -1,8 +1,9 @@
 const express = require("express")
-
 const route = express.Router()
 const user = require("../models/schema")
 const islogedin = require("../middleware/auth")
+const upload = require("../middleware/multer")
+const cloudinary = require("cloudinary")
 
 const cookieOption = {
     maxAge : 7*24*60*60*1000 , //7 days
@@ -10,7 +11,7 @@ const cookieOption = {
     secure:true
 }
 
-route.post("/register",async(req,res)=>{
+route.post("/register",upload.single("avatar"),async(req,res)=>{
 const {name,email,password} = req.body
 if (!name||!email||!password) {
     return res.status(400).json({msg:"please fill the form properly"})
@@ -32,6 +33,26 @@ const newUser = await user.create({
 })
 if (!newUser) {
     return res.status(400).json({msg:"user registration fail"})
+}
+console.log("file" ,JSON.stringify(req.file));
+if (req.file) {
+    try {
+       const result =await cloudinary.v2.uploader.upload(req.file.path,{
+        folder:"learning",
+        width:250,
+        height:250,
+        gravity:"faces",
+        crop:"fill"
+       })
+       if (result) {
+        user.avatar.public_id = result.public_id
+        user.avatar.secure_url = result.secure_url
+
+        fs.rm(`uploads/${req.files.filename}`)
+       }
+    } catch (error) {
+        console.log(error,"error");
+    }
 }
    await newUser.save();
    
