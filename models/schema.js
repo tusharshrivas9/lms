@@ -1,6 +1,7 @@
 const mongoose = require("mongoose")
 const bcrypt = require("bcryptjs")
 const jwt = require("jsonwebtoken")
+const crypto = require("crypto")
 
 
 
@@ -57,12 +58,24 @@ userSchema.methods = {
         return await jwt.sign(
             {id:this._id,email:this.email,subcription:this.subcription,role:this.role},
             process.env.Secret,{
-                expires:process.env.expires
+                expiresIn:process.env.expires
             }
         )
     },
     comparePassword: async function (plainTextPassword) {
         return await bcrypt.compare(plainTextPassword,this.password)
+    },
+    generatepasswordResetToken: async function () {
+        const resetToken = await crypto.randomBytes(20).toString("hex")
+ 
+        this.forgetpasswordtoken = crypto
+             .createHash("sha256")
+             .update(resetToken)
+             .digest("hex")
+             const currentTime = new Date();
+              this.forgetpasswordExpiry = new Date(currentTime.getTime() + 15 * 60 * 1000)
+        
+             return resetToken
     }
 }
 
@@ -71,3 +84,4 @@ const user = mongoose.model("user",userSchema)
 
 
 module.exports = user
+

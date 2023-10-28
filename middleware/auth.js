@@ -17,4 +17,11 @@ const islogedin = async(req,res,next)=>{
     next()
 }
 
-module.exports = islogedin
+const authourazation = (...role)=> async(req,res)=>{
+    const currentUserRole = req.user.role
+    if (!role.includes(currentUserRole)) {
+        return res.status(400).json("you dont have permission")
+    }
+}
+
+module.exports = {islogedin,authourazation}
